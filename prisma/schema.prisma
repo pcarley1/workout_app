@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BaselineStatus {
+  NOT_TESTED
+  NEEDS_WORK
+  OKAY
+  STRONG
+}
+
+model Exercise {
+  id                  String               @id @default(cuid())
+  slug                String               @unique
+  name                String
+  category            String
+  bodyFocus           String[]
+  swingFocus          String[]
+  equipment           String[]
+  defaultPrescription String
+  setup               String
+  cues                String[]
+  commonMistakes      String[]
+  golfBenefit         String
+  regression          String
+  progression         String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  logs                WorkoutExerciseLog[]
+  strengthLogs        StrengthLog[]
+}
+
+model BaselineTest {
+  id        String           @id @default(cuid())
+  slug      String           @unique
+  name      String
+  category  String
+  side      String
+  unit      String?
+  priority  Int
+  results   BaselineResult[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model BaselineResult {
+  id             String         @id @default(cuid())
+  baselineTest   BaselineTest   @relation(fields: [baselineTestId], references: [id])
+  baselineTestId String
+  status         BaselineStatus
+  numericValue   Float?
+  notes          String?
+  recordedAt     DateTime       @default(now())
+}
+
+model WorkoutSession {
+  id                 String               @id @default(cuid())
+  length             Int
+  focus              String
+  intensity          String
+  adjustedIntensity  String
+  equipment          String[]
+  energyBefore       Int
+  sorenessBefore     Int
+  painFlags          String[]
+  recommendationText String
+  status             String               @default("planned")
+  startedAt          DateTime             @default(now())
+  completedAt        DateTime?
+  totalDurationMin   Int?
+  difficulty         Int?
+  energyAfter        Int?
+  sorenessAfter      Int?
+  notes              String?
+  exerciseLogs       WorkoutExerciseLog[]
+  golfFeelLog        GolfFeelLog?
+}
+
+model WorkoutExerciseLog {
+  id                String         @id @default(cuid())
+  session           WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId         String
+  exercise          Exercise?      @relation(fields: [exerciseId], references: [id])
+  exerciseId        String?
+  title             String
+  prescription      String
+  category          String
+  plannedMinutes    Int
+  completed         Boolean        @default(false)
+  skipped           Boolean        @default(false)
+  substituted       Boolean        @default(false)
+  actualDurationMin Int?
+  sets              Int?
+  reps              Int?
+  load              Float?
+  notes             String?
+  orderIndex        Int
+}
+
+model StrengthLog {
+  id         String   @id @default(cuid())
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId String
+  sets       Int
+  reps       Int
+  load       Float?
+  rpe        Int?
+  notes      String?
+  recordedAt DateTime @default(now())
+}
+
+model GolfFeelLog {
+  id         String         @id @default(cuid())
+  session    WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId  String         @unique
+  rotation   Int
+  shallowing Int
+  posture    Int
+  speedFeel  Int
+  notes      String?
+  recordedAt DateTime       @default(now())
+}

@@ -1,4 +1,5 @@
 import { saveBaselineResult } from "../lib/actions";
+import { SubmitButton } from "./SubmitButton";
 
 type Props = {
   test: {
@@ -15,8 +16,9 @@ export function BaselineTestCard({ test }: Props) {
 
   return (
     <article className="panel">
+      <p className="eyebrow">{test.category}</p>
       <h2>{test.name}</h2>
-      <p>{latest ? `Latest: ${latest.status.toLowerCase().replace("_", " ")}` : "Not tested yet"}</p>
+      <p className="muted">{latest ? `Latest: ${latest.status.toLowerCase().replace("_", " ")}` : "Not tested yet"}</p>
       <form action={saveBaselineResult} className="mini-form">
         <input type="hidden" name="baselineTestId" value={test.id} />
         <select name="status" defaultValue="OKAY">
@@ -26,7 +28,7 @@ export function BaselineTestCard({ test }: Props) {
         </select>
         <input name="numericValue" type="number" step="0.1" placeholder={test.unit ?? "value"} />
         <input name="notes" placeholder="Notes" />
-        <button type="submit">Save</button>
+        <SubmitButton pendingLabel="Saving...">Save</SubmitButton>
       </form>
     </article>
   );

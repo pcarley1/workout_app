@@ -1,21 +1,23 @@
 import { createWorkoutSession } from "../lib/actions";
+import { SubmitButton } from "./SubmitButton";
 
 const equipmentOptions = ["bodyweight", "medball", "dumbbells", "bands", "bench", "golf_club", "open_floor"];
 
 export function TodayForm() {
   return (
     <form action={createWorkoutSession} className="grid-form">
-      <label>
-        Length
+      <div className="form-row">
+        <label>
+          Length
         <select name="length" defaultValue="25">
           <option value="15">15 minutes</option>
           <option value="25">25 minutes</option>
           <option value="40">40 minutes</option>
         </select>
-      </label>
+        </label>
 
-      <label>
-        Focus
+        <label>
+          Focus
         <select name="focus" defaultValue="posture_shallowing">
           <option value="posture_shallowing">Posture / shallowing</option>
           <option value="swing_speed">Swing speed</option>
@@ -24,26 +26,29 @@ export function TodayForm() {
           <option value="recovery">Recovery</option>
           <option value="balanced">Balanced</option>
         </select>
-      </label>
+        </label>
+      </div>
 
-      <label>
-        Intensity
+      <div className="form-row form-row-compact">
+        <label>
+          Intensity
         <select name="intensity" defaultValue="normal">
           <option value="easy">Easy</option>
           <option value="normal">Normal</option>
           <option value="push">Push</option>
         </select>
-      </label>
+        </label>
 
-      <label>
-        Energy
+        <label>
+          Energy
         <input name="energy" type="number" min="1" max="5" defaultValue="4" />
-      </label>
+        </label>
 
-      <label>
-        Soreness
+        <label>
+          Soreness
         <input name="soreness" type="number" min="1" max="5" defaultValue="2" />
-      </label>
+        </label>
+      </div>
 
       <fieldset>
         <legend>Equipment</legend>
@@ -65,7 +70,9 @@ export function TodayForm() {
         <input name="painFlags" placeholder="left hip, low back" />
       </label>
 
-      <button type="submit">Start guided workout</button>
+      <SubmitButton className="primary-action" pendingLabel="Building session...">
+        Start guided workout
+      </SubmitButton>
     </form>
   );
 }

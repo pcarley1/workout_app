@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { BaselineStatus as PrismaBaselineStatus } from "@prisma/client";
 import { prisma } from "./db";
 import { recommendWorkout } from "./recommendations";
 import type { BaselineStatus, Equipment, Intensity, SessionLength, WorkoutFocus } from "./types";
@@ -106,4 +107,22 @@ export async function completeWorkoutSession(formData: FormData) {
   });
 
   redirect("/progress");
+}
+
+export async function saveBaselineResult(formData: FormData) {
+  const baselineTestId = String(formData.get("baselineTestId"));
+  const status = String(formData.get("status")).toUpperCase() as PrismaBaselineStatus;
+  const numericRaw = String(formData.get("numericValue") ?? "");
+  const notes = String(formData.get("notes") ?? "");
+
+  await prisma.baselineResult.create({
+    data: {
+      baselineTestId,
+      status,
+      numericValue: numericRaw ? Number(numericRaw) : null,
+      notes
+    }
+  });
+
+  redirect("/baseline");
 }

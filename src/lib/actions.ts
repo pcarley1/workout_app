@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { BaselineStatus as PrismaBaselineStatus } from "@prisma/client";
+import { requireAuth } from "./auth";
 import { prisma } from "./db";
 import { recommendWorkout } from "./recommendations";
 import type { BaselineStatus, Equipment, Intensity, SessionLength, WorkoutFocus } from "./types";
@@ -12,6 +13,8 @@ function coerceRating(value: FormDataEntryValue | null, fallback: 1 | 2 | 3 | 4 
 }
 
 export async function createWorkoutSession(formData: FormData) {
+  await requireAuth();
+
   const length = Number(formData.get("length")) as SessionLength;
   const focus = String(formData.get("focus")) as WorkoutFocus;
   const intensity = String(formData.get("intensity")) as Intensity;
@@ -70,6 +73,8 @@ export async function createWorkoutSession(formData: FormData) {
 }
 
 export async function completeWorkoutSession(formData: FormData) {
+  await requireAuth();
+
   const sessionId = String(formData.get("sessionId"));
   const difficulty = Number(formData.get("difficulty"));
   const energyAfter = Number(formData.get("energyAfter"));
@@ -110,6 +115,8 @@ export async function completeWorkoutSession(formData: FormData) {
 }
 
 export async function saveBaselineResult(formData: FormData) {
+  await requireAuth();
+
   const baselineTestId = String(formData.get("baselineTestId"));
   const status = String(formData.get("status")).toUpperCase() as PrismaBaselineStatus;
   const numericRaw = String(formData.get("numericValue") ?? "");

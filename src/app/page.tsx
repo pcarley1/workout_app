@@ -1,4 +1,8 @@
-export default function TodayPage() {
+import { requireAuth } from "../lib/auth";
+
+export default async function TodayPage() {
+  await requireAuth();
+
   return (
     <main className="page">
       <h1>Today</h1>

@@ -67,3 +67,43 @@ export async function createWorkoutSession(formData: FormData) {
 
   redirect(`/workout/${session.id}`);
 }
+
+export async function completeWorkoutSession(formData: FormData) {
+  const sessionId = String(formData.get("sessionId"));
+  const difficulty = Number(formData.get("difficulty"));
+  const energyAfter = Number(formData.get("energyAfter"));
+  const sorenessAfter = Number(formData.get("sorenessAfter"));
+  const rotation = Number(formData.get("rotation"));
+  const shallowing = Number(formData.get("shallowing"));
+  const posture = Number(formData.get("posture"));
+  const speedFeel = Number(formData.get("speedFeel"));
+  const totalDurationMin = Number(formData.get("totalDurationMin"));
+  const notes = String(formData.get("notes") ?? "");
+
+  await prisma.workoutSession.update({
+    where: { id: sessionId },
+    data: {
+      status: "completed",
+      completedAt: new Date(),
+      totalDurationMin,
+      difficulty,
+      energyAfter,
+      sorenessAfter,
+      notes,
+      golfFeelLog: {
+        upsert: {
+          create: { rotation, shallowing, posture, speedFeel, notes },
+          update: { rotation, shallowing, posture, speedFeel, notes }
+        }
+      },
+      exerciseLogs: {
+        updateMany: {
+          where: { sessionId },
+          data: { completed: true }
+        }
+      }
+    }
+  });
+
+  redirect("/progress");
+}

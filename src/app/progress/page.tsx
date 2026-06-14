@@ -17,17 +17,33 @@ export default async function ProgressPage() {
   return (
     <AppShell>
       <main className="page">
+        <p className="eyebrow">Training log</p>
         <h1>Progress</h1>
         <ProgressSummary summary={summary} />
-        <section className="panel">
-          <h2>Recent workouts</h2>
+        <section className="panel recent-panel">
+          <div className="panel-title-row">
+            <div>
+              <p className="eyebrow">Recent work</p>
+              <h2>Completed sessions</h2>
+            </div>
+            <span className="pill">{sessions.length} logged</span>
+          </div>
           {sessions.length === 0 ? <p>No completed workouts yet.</p> : null}
-          {sessions.map((session) => (
-            <p key={session.id}>
-              {session.focus} - {session.totalDurationMin ?? session.length} min - difficulty{" "}
-              {session.difficulty ?? "not rated"}
-            </p>
-          ))}
+          <div className="recent-list">
+            {sessions.map((session) => (
+              <div key={session.id} className="recent-row">
+                <div>
+                  <strong>{session.focus.replace("_", " ")}</strong>
+                  <span>{session.totalDurationMin ?? session.length} min</span>
+                </div>
+                <div className="recent-meta">
+                  <span>Difficulty {session.difficulty ?? "-"}</span>
+                  <span>Rotation {session.golfFeelLog?.rotation ?? "-"}</span>
+                  <span>Shallowing {session.golfFeelLog?.shallowing ?? "-"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
     </AppShell>

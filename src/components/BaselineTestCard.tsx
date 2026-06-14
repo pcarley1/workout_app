@@ -28,7 +28,7 @@ export function BaselineTestCard({ test }: Props) {
         </select>
         <input name="numericValue" type="number" step="0.1" placeholder={test.unit ?? "value"} />
         <input name="notes" placeholder="Notes" />
-        <SubmitButton pendingLabel="Saving...">Save</SubmitButton>
+        <SubmitButton className="secondary-action" pendingLabel="Saving...">Save</SubmitButton>
       </form>
     </article>
   );

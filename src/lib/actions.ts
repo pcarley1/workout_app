@@ -71,6 +71,7 @@ export async function createWorkoutSession(formData: FormData) {
             title: exercise?.name ?? block.title,
             prescription: exercise?.defaultPrescription ?? `${block.minutes} minutes`,
             category: exercise?.category ?? block.category,
+            sets: exercise?.defaultSets,
             plannedMinutes: block.minutes,
             orderIndex: index
           };

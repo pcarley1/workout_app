@@ -15,7 +15,10 @@ type PlayerSession = {
     prescription: string;
     category: string;
     plannedMinutes: number;
+    sets: number | null;
     exercise: {
+      defaultSets: number;
+      defaultRestSeconds: number;
       setup: string;
       instructions: string[];
       feel: string;
@@ -40,22 +43,43 @@ const summaryFields = [
   ["speedFeel", "Speed feel"]
 ] as const;
 
+function formatSeconds(value: number) {
+  const minutes = Math.floor(value / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (value % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 export function WorkoutPlayer({ session }: { session: PlayerSession }) {
   const [index, setIndex] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState((session.exerciseLogs[0]?.plannedMinutes ?? 0) * 60);
+  const [setNumber, setSetNumber] = useState(1);
+  const [resting, setResting] = useState(false);
   const [running, setRunning] = useState(false);
   const current = session.exerciseLogs[index];
   const done = index >= session.exerciseLogs.length;
+  const totalSets = Math.max(1, current?.sets ?? current?.exercise?.defaultSets ?? 1);
+  const restSeconds = current?.exercise?.defaultRestSeconds ?? 45;
+  const [secondsLeft, setSecondsLeft] = useState(restSeconds);
 
   useEffect(() => {
-    if (!running || done) return;
+    setSetNumber(1);
+    setResting(false);
+    setRunning(false);
+    setSecondsLeft(restSeconds);
+  }, [index, restSeconds]);
+
+  useEffect(() => {
+    if (!running || !resting || done) return;
 
     const interval = window.setInterval(() => {
       setSecondsLeft((value) => {
         if (value <= 1) {
           window.clearInterval(interval);
           setRunning(false);
-          return 0;
+          setResting(false);
+          setSetNumber((currentSet) => Math.min(totalSets, currentSet + 1));
+          return restSeconds;
         }
 
         return value - 1;
@@ -63,15 +87,27 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [running, done, index]);
+  }, [running, resting, done, totalSets, restSeconds]);
 
-  const mmss = useMemo(() => {
-    const minutes = Math.floor(secondsLeft / 60)
-      .toString()
-      .padStart(2, "0");
-    const seconds = (secondsLeft % 60).toString().padStart(2, "0");
-    return `${minutes}:${seconds}`;
-  }, [secondsLeft]);
+  const mmss = useMemo(() => formatSeconds(secondsLeft), [secondsLeft]);
+
+  function goToExercise(nextIndex: number) {
+    setRunning(false);
+    setResting(false);
+    setSetNumber(1);
+    setIndex(Math.max(0, nextIndex));
+  }
+
+  function completeSet() {
+    if (setNumber >= totalSets) {
+      goToExercise(index + 1);
+      return;
+    }
+
+    setRunning(false);
+    setResting(true);
+    setSecondsLeft(restSeconds);
+  }
 
   if (done) {
     return (
@@ -105,11 +141,15 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
         <p className="muted">{session.recommendationText}</p>
         <div className="player-card">
           <p className="step-count">
-          {index + 1} of {session.exerciseLogs.length}
+            Exercise {index + 1} of {session.exerciseLogs.length}
           </p>
-        <h1>{current.title}</h1>
+          <h1>{current.title}</h1>
           <p className="prescription">{current.prescription}</p>
-          <p className="pill">{current.category}</p>
+          <div className="button-row set-row">
+            <p className="pill">Set {setNumber} of {totalSets}</p>
+            <p className="pill">Rest {formatSeconds(restSeconds)}</p>
+            <p className="pill">{current.category}</p>
+          </div>
           {current.exercise ? (
             <div className="exercise-coaching">
               <p>{current.exercise.setup}</p>
@@ -151,16 +191,36 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
               </details>
             </div>
           ) : null}
-        <div className="timer">{mmss}</div>
+          <div className="timer-panel">
+            <p className="timer-label">{resting ? "Rest between sets" : "Perform the set, then start rest"}</p>
+            <div className="timer">{resting ? mmss : formatSeconds(restSeconds)}</div>
+          </div>
           <div className="button-row player-controls">
-            <button type="button" className="icon-button" aria-label="Back 15 seconds" onClick={() => setSecondsLeft((value) => Math.max(0, value - 15))}>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Reduce rest by 15 seconds"
+              disabled={!resting}
+              onClick={() => setSecondsLeft((value) => Math.max(0, value - 15))}
+            >
               -15
             </button>
-            <button type="button" className="primary-action round-action" onClick={() => setRunning((value) => !value)}>
+            <button
+              type="button"
+              className="primary-action round-action"
+              disabled={!resting}
+              onClick={() => setRunning((value) => !value)}
+            >
               {running ? <Pause size={22} /> : <Play size={22} />}
-              {running ? "Pause" : "Start"}
+              {running ? "Pause" : "Start rest"}
             </button>
-            <button type="button" className="icon-button" aria-label="Forward 15 seconds" onClick={() => setSecondsLeft((value) => value + 15)}>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Add 15 seconds rest"
+              disabled={!resting}
+              onClick={() => setSecondsLeft((value) => value + 15)}
+            >
               +15
             </button>
           </div>
@@ -168,12 +228,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
             <button
               type="button"
               className="secondary-action"
-              onClick={() => {
-                const previous = Math.max(0, index - 1);
-                setRunning(false);
-                setIndex(previous);
-                setSecondsLeft((session.exerciseLogs[previous]?.plannedMinutes ?? 0) * 60);
-              }}
+              onClick={() => goToExercise(index - 1)}
             >
               <StepBack size={18} />
               Previous
@@ -183,26 +238,18 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
               className="secondary-action"
               onClick={() => {
                 setRunning(false);
-                setSecondsLeft((current?.plannedMinutes ?? 0) * 60);
+                setResting(false);
+                setSecondsLeft(restSeconds);
               }}
             >
               <RotateCcw size={18} />
-              Reset
+              Reset rest
             </button>
-          <button
-            type="button"
-              className="primary-action"
-            onClick={() => {
-              const next = index + 1;
-                setRunning(false);
-              setIndex(next);
-              setSecondsLeft((session.exerciseLogs[next]?.plannedMinutes ?? 0) * 60);
-            }}
-          >
-              Complete
+            <button type="button" className="primary-action" onClick={completeSet}>
+              {setNumber >= totalSets ? "Finish exercise" : resting ? "Skip rest" : "Set complete"}
               <StepForward size={18} />
-          </button>
-        </div>
+            </button>
+          </div>
         </div>
       </section>
     </main>

@@ -23,6 +23,8 @@ model Exercise {
   swingFocus          String[]
   equipment           String[]
   defaultPrescription String
+  defaultSets        Int                  @default(2)
+  defaultRestSeconds Int                  @default(45)
   setup               String
   instructions        String[]             @default([])
   feel                String               @default("")

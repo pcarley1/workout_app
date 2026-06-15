@@ -609,6 +609,26 @@ textarea {
   color: var(--gold);
 }
 
+
+.set-row {
+  align-items: center;
+}
+
+.timer-panel {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 12px 0;
+}
+
+.timer-label {
+  margin-bottom: 0;
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
 .timer {
   justify-self: center;
   align-self: center;
@@ -872,7 +892,27 @@ textarea {
     font-size: 27px;
   }
 
-  .timer {
+
+.set-row {
+  align-items: center;
+}
+
+.timer-panel {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 12px 0;
+}
+
+.timer-label {
+  margin-bottom: 0;
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+.timer {
     margin: 12px 0;
     font-size: 64px;
   }
@@ -967,6 +1007,26 @@ textarea {
   color: var(--gold);
 }
 
+
+.set-row {
+  align-items: center;
+}
+
+.timer-panel {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 12px 0;
+}
+
+.timer-label {
+  margin-bottom: 0;
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
 .timer {
     font-size: 56px;
   }

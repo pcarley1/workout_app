@@ -42,6 +42,8 @@ export type ExerciseSeed = {
   swingFocus: string[];
   equipment: Equipment[];
   defaultPrescription: string;
+  defaultSets: number;
+  defaultRestSeconds: number;
   setup: string;
   instructions: string[];
   feel: string;

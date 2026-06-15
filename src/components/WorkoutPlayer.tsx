@@ -15,6 +15,18 @@ type PlayerSession = {
     prescription: string;
     category: string;
     plannedMinutes: number;
+    exercise: {
+      setup: string;
+      instructions: string[];
+      feel: string;
+      cues: string[];
+      commonMistakes: string[];
+      golfBenefit: string;
+      regression: string;
+      progression: string;
+      referenceUrl: string | null;
+      referenceTitle: string | null;
+    } | null;
   }>;
 };
 
@@ -98,6 +110,47 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
         <h1>{current.title}</h1>
           <p className="prescription">{current.prescription}</p>
           <p className="pill">{current.category}</p>
+          {current.exercise ? (
+            <div className="exercise-coaching">
+              <p>{current.exercise.setup}</p>
+              <div className="coaching-grid">
+                <section>
+                  <h2>How to do it</h2>
+                  <ol>
+                    {current.exercise.instructions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ol>
+                </section>
+                <section>
+                  <h2>Feel</h2>
+                  <p>{current.exercise.feel}</p>
+                  <h2>Cues</h2>
+                  <ul>
+                    {current.exercise.cues.map((cue) => (
+                      <li key={cue}>{cue}</li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+              <details>
+                <summary>Why it matters / mistakes</summary>
+                <p>{current.exercise.golfBenefit}</p>
+                <ul>
+                  {current.exercise.commonMistakes.map((mistake) => (
+                    <li key={mistake}>{mistake}</li>
+                  ))}
+                </ul>
+                <p><strong>Regression:</strong> {current.exercise.regression}</p>
+                <p><strong>Progression:</strong> {current.exercise.progression}</p>
+                {current.exercise.referenceUrl ? (
+                  <a href={current.exercise.referenceUrl} target="_blank" rel="noreferrer">
+                    {current.exercise.referenceTitle ?? "Reference video"}
+                  </a>
+                ) : null}
+              </details>
+            </div>
+          ) : null}
         <div className="timer">{mmss}</div>
           <div className="button-row player-controls">
             <button type="button" className="icon-button" aria-label="Back 15 seconds" onClick={() => setSecondsLeft((value) => Math.max(0, value - 15))}>

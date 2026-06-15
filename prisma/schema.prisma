@@ -24,11 +24,16 @@ model Exercise {
   equipment           String[]
   defaultPrescription String
   setup               String
+  instructions        String[]             @default([])
+  feel                String               @default("")
   cues                String[]
   commonMistakes      String[]
   golfBenefit         String
   regression          String
   progression         String
+  tags                String[]             @default([])
+  referenceUrl        String?
+  referenceTitle      String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   logs                WorkoutExerciseLog[]

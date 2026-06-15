@@ -43,9 +43,14 @@ export type ExerciseSeed = {
   equipment: Equipment[];
   defaultPrescription: string;
   setup: string;
+  instructions: string[];
+  feel: string;
   cues: string[];
   commonMistakes: string[];
   golfBenefit: string;
   regression: string;
   progression: string;
+  tags: string[];
+  referenceUrl?: string;
+  referenceTitle?: string;
 };

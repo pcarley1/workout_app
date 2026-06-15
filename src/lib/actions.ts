@@ -46,6 +46,11 @@ export async function createWorkoutSession(formData: FormData) {
     }))
   });
 
+  const exerciseRows = await prisma.exercise.findMany({
+    where: { slug: { in: recommendation.blocks.map((block) => block.exerciseSlug) } }
+  });
+  const exercisesBySlug = new Map(exerciseRows.map((exercise) => [exercise.slug, exercise]));
+
   const session = await prisma.workoutSession.create({
     data: {
       length,
@@ -58,13 +63,18 @@ export async function createWorkoutSession(formData: FormData) {
       painFlags,
       recommendationText: recommendation.reason,
       exerciseLogs: {
-        create: recommendation.blocks.map((block, index) => ({
-          title: block.title,
-          prescription: `${block.minutes} minutes`,
-          category: block.category,
-          plannedMinutes: block.minutes,
-          orderIndex: index
-        }))
+        create: recommendation.blocks.map((block, index) => {
+          const exercise = exercisesBySlug.get(block.exerciseSlug);
+
+          return {
+            exerciseId: exercise?.id,
+            title: exercise?.name ?? block.title,
+            prescription: exercise?.defaultPrescription ?? `${block.minutes} minutes`,
+            category: exercise?.category ?? block.category,
+            plannedMinutes: block.minutes,
+            orderIndex: index
+          };
+        })
       }
     }
   });

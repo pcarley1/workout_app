@@ -12,7 +12,7 @@ export default async function WorkoutPage({
   const { sessionId } = await params;
   const session = await prisma.workoutSession.findUnique({
     where: { id: sessionId },
-    include: { exerciseLogs: { orderBy: { orderIndex: "asc" } } }
+    include: { exerciseLogs: { orderBy: { orderIndex: "asc" }, include: { exercise: true } } }
   });
 
   if (!session) notFound();

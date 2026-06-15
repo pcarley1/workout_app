@@ -1,4 +1,4 @@
-# Workout App
+# TurnSpeed
 
 Private single-user golf fitness app for guided workouts, baseline tests, and progress tracking.
 

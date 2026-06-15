@@ -9,7 +9,7 @@ export default async function TodayPage() {
     <AppShell>
       <main className="page">
         <section className="hero-panel">
-          <p className="eyebrow">Golf performance</p>
+          <p className="eyebrow">TurnSpeed training</p>
           <h1>Today&apos;s rotation work</h1>
           <p>
             Build a session around speed, posture, lead-hip control, and the kind of rotation that makes shallowing

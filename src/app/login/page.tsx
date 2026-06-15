@@ -25,7 +25,7 @@ export default async function LoginPage({
     <main className="auth-page">
       <form action={login} className="panel">
         <p className="eyebrow">Private training app</p>
-        <h1>Golf Workout</h1>
+        <h1>TurnSpeed</h1>
         <p>Enter the app password to continue.</p>
         <input name="password" type="password" placeholder="Password" required />
         {params.error ? <p className="error">That password did not work.</p> : null}

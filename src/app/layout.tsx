@@ -8,8 +8,8 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", weight:
 const dmMono = DM_Mono({ subsets: ["latin"], variable: "--font-dm-mono", weight: ["400", "500"] });
 
 export const metadata: Metadata = {
-  title: "Golf Workout",
-  description: "Personalized golf fitness, mobility, and swing-speed training"
+  title: "TurnSpeed",
+  description: "Personalized golf fitness, mobility, and swing-speed training for better rotation"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

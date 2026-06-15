@@ -17,5 +17,7 @@ export default async function WorkoutPage({
 
   if (!session) notFound();
 
-  return <WorkoutPlayer session={session} />;
+  const exerciseLibrary = await prisma.exercise.findMany({ orderBy: { name: "asc" } });
+
+  return <WorkoutPlayer exerciseLibrary={exerciseLibrary} session={session} />;
 }

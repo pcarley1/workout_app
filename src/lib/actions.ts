@@ -119,6 +119,33 @@ export async function logWorkoutSet(formData: FormData) {
     }
   });
 }
+
+export async function replaceWorkoutExercise(formData: FormData) {
+  await requireAuth();
+
+  const exerciseLogId = String(formData.get("exerciseLogId") ?? "");
+  const replacementExerciseId = String(formData.get("replacementExerciseId") ?? "");
+  if (!exerciseLogId || !replacementExerciseId) return;
+
+  const exercise = await prisma.exercise.findUnique({ where: { id: replacementExerciseId } });
+  if (!exercise) return;
+
+  await prisma.workoutExerciseLog.update({
+    where: { id: exerciseLogId },
+    data: {
+      exerciseId: exercise.id,
+      title: exercise.name,
+      prescription: exercise.defaultPrescription,
+      category: exercise.category,
+      sets: exercise.defaultSets,
+      reps: null,
+      load: null,
+      substituted: true,
+      setLogs: { deleteMany: {} }
+    }
+  });
+}
+
 export async function completeWorkoutSession(formData: FormData) {
   await requireAuth();
 

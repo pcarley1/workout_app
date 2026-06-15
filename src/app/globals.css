@@ -558,6 +558,40 @@ textarea {
 }
 
 
+
+.exercise-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.compact-action {
+  min-height: 38px;
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.replace-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(212, 168, 67, 0.25);
+  border-radius: 8px;
+  background: rgba(212, 168, 67, 0.08);
+}
+
+.replace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.replace-grid .secondary-action {
+  justify-content: flex-start;
+  min-height: 40px;
+  text-align: left;
+}
 .exercise-coaching {
   display: grid;
   gap: 12px;
@@ -984,6 +1018,40 @@ textarea {
   }
 
 
+
+.exercise-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.compact-action {
+  min-height: 38px;
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.replace-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(212, 168, 67, 0.25);
+  border-radius: 8px;
+  background: rgba(212, 168, 67, 0.08);
+}
+
+.replace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.replace-grid .secondary-action {
+  justify-content: flex-start;
+  min-height: 40px;
+  text-align: left;
+}
 .exercise-coaching {
   display: grid;
   gap: 12px;

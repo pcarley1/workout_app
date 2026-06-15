@@ -2,8 +2,17 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Pause, Play, RotateCcw, StepBack, StepForward } from "lucide-react";
-import { completeWorkoutSession, logWorkoutSet } from "../lib/actions";
+import { completeWorkoutSession, logWorkoutSet, replaceWorkoutExercise } from "../lib/actions";
 import { SubmitButton } from "./SubmitButton";
+
+type ExerciseOption = {
+  id: string;
+  name: string;
+  category: string;
+  equipment: string[];
+  tags: string[];
+  defaultPrescription: string;
+};
 
 type PlayerSession = {
   id: string;
@@ -18,6 +27,7 @@ type PlayerSession = {
     sets: number | null;
     setLogs: Array<{ setIndex: number; reps: number | null; load: number | null }>;
     exercise: {
+      id: string;
       defaultSets: number;
       defaultRestSeconds: number;
       setup: string;
@@ -30,6 +40,8 @@ type PlayerSession = {
       progression: string;
       referenceUrl: string | null;
       referenceTitle: string | null;
+      tags: string[];
+      equipment: string[];
     } | null;
   }>;
 };
@@ -60,7 +72,23 @@ function nextSetNumber(loggedSets: Array<{ setIndex: number }>, totalSets: numbe
   return totalSets;
 }
 
-export function WorkoutPlayer({ session }: { session: PlayerSession }) {
+function scoreReplacement(current: PlayerSession["exerciseLogs"][number], option: ExerciseOption) {
+  if (current.exercise && option.id === current.exercise.id) return -1;
+  let score = option.category === current.category ? 8 : 0;
+  const currentTags = new Set(current.exercise?.tags ?? []);
+  const currentEquipment = new Set(current.exercise?.equipment ?? []);
+  score += option.tags.filter((tag) => currentTags.has(tag)).length * 3;
+  score += option.equipment.filter((item) => currentEquipment.has(item)).length;
+  return score;
+}
+
+export function WorkoutPlayer({
+  exerciseLibrary,
+  session
+}: {
+  exerciseLibrary: ExerciseOption[];
+  session: PlayerSession;
+}) {
   const [index, setIndex] = useState(0);
   const current = session.exerciseLogs[index];
   const done = index >= session.exerciseLogs.length;
@@ -72,6 +100,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
   const [secondsLeft, setSecondsLeft] = useState(restSeconds);
   const [reps, setReps] = useState("");
   const [load, setLoad] = useState("");
+  const [replacing, setReplacing] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -83,6 +112,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
     setSecondsLeft(nextExercise?.exercise?.defaultRestSeconds ?? 45);
     setReps("");
     setLoad("");
+    setReplacing(false);
   }, [index, session.exerciseLogs]);
 
   useEffect(() => {
@@ -108,6 +138,13 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
 
   const mmss = useMemo(() => formatSeconds(secondsLeft), [secondsLeft]);
   const loadApplicable = current ? ["strength", "power"].includes(current.category) : false;
+  const replacementOptions = current
+    ? exerciseLibrary
+        .map((option) => ({ ...option, score: scoreReplacement(current, option) }))
+        .filter((option) => option.score >= 0)
+        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    : [];
+  const topReplacements = replacementOptions.slice(0, 3);
 
   function goToExercise(nextIndex: number) {
     setRunning(false);
@@ -115,6 +152,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
     setSetNumber(1);
     setReps("");
     setLoad("");
+    setReplacing(false);
     setIndex(Math.max(0, nextIndex));
   }
 
@@ -124,6 +162,20 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
     setSecondsLeft(restSeconds);
     setSetNumber((currentSet) => Math.min(totalSets, currentSet + 1));
     setReps("");
+  }
+
+  function replaceExercise(replacementExerciseId: string) {
+    const formData = new FormData();
+    formData.set("exerciseLogId", current.id);
+    formData.set("replacementExerciseId", replacementExerciseId);
+    startTransition(() => {
+      void replaceWorkoutExercise(formData);
+    });
+    setReps("");
+    setLoad("");
+    setResting(false);
+    setRunning(false);
+    setReplacing(false);
   }
 
   function logSetAndContinue() {
@@ -180,8 +232,34 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
           <p className="step-count">
             Exercise {index + 1} of {session.exerciseLogs.length}
           </p>
-          <h1>{current.title}</h1>
+          <div className="exercise-heading">
+            <h1>{current.title}</h1>
+            <button type="button" className="secondary-action compact-action" onClick={() => setReplacing((value) => !value)}>
+              Replace
+            </button>
+          </div>
           <p className="prescription">{current.prescription}</p>
+          {replacing ? (
+            <div className="replace-panel">
+              <p className="timer-label">Best matches</p>
+              <div className="replace-grid">
+                {topReplacements.map((option) => (
+                  <button key={option.id} type="button" className="secondary-action" onClick={() => replaceExercise(option.id)}>
+                    {option.name}
+                  </button>
+                ))}
+              </div>
+              <label>
+                Browse all
+                <select defaultValue="" onChange={(event) => event.target.value && replaceExercise(event.target.value)}>
+                  <option value="" disabled>Choose replacement</option>
+                  {replacementOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{option.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
           <div className="button-row set-row">
             <p className="pill">Set {setNumber} of {totalSets}</p>
             <p className="pill">Rest {formatSeconds(restSeconds)}</p>

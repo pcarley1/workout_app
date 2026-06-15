@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Pause, Play, RotateCcw, StepBack, StepForward } from "lucide-react";
-import { completeWorkoutSession } from "../lib/actions";
+import { completeWorkoutSession, logWorkoutSet } from "../lib/actions";
 import { SubmitButton } from "./SubmitButton";
 
 type PlayerSession = {
@@ -16,6 +16,7 @@ type PlayerSession = {
     category: string;
     plannedMinutes: number;
     sets: number | null;
+    setLogs: Array<{ setIndex: number; reps: number | null; load: number | null }>;
     exercise: {
       defaultSets: number;
       defaultRestSeconds: number;
@@ -51,23 +52,38 @@ function formatSeconds(value: number) {
   return `${minutes}:${seconds}`;
 }
 
+function nextSetNumber(loggedSets: Array<{ setIndex: number }>, totalSets: number) {
+  const logged = new Set(loggedSets.map((set) => set.setIndex));
+  for (let set = 1; set <= totalSets; set += 1) {
+    if (!logged.has(set)) return set;
+  }
+  return totalSets;
+}
+
 export function WorkoutPlayer({ session }: { session: PlayerSession }) {
   const [index, setIndex] = useState(0);
-  const [setNumber, setSetNumber] = useState(1);
-  const [resting, setResting] = useState(false);
-  const [running, setRunning] = useState(false);
   const current = session.exerciseLogs[index];
   const done = index >= session.exerciseLogs.length;
   const totalSets = Math.max(1, current?.sets ?? current?.exercise?.defaultSets ?? 1);
   const restSeconds = current?.exercise?.defaultRestSeconds ?? 45;
+  const [setNumber, setSetNumber] = useState(() => nextSetNumber(session.exerciseLogs[0]?.setLogs ?? [], totalSets));
+  const [resting, setResting] = useState(false);
+  const [running, setRunning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(restSeconds);
+  const [reps, setReps] = useState("");
+  const [load, setLoad] = useState("");
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    setSetNumber(1);
+    const nextExercise = session.exerciseLogs[index];
+    const nextTotalSets = Math.max(1, nextExercise?.sets ?? nextExercise?.exercise?.defaultSets ?? 1);
+    setSetNumber(nextSetNumber(nextExercise?.setLogs ?? [], nextTotalSets));
     setResting(false);
     setRunning(false);
-    setSecondsLeft(restSeconds);
-  }, [index, restSeconds]);
+    setSecondsLeft(nextExercise?.exercise?.defaultRestSeconds ?? 45);
+    setReps("");
+    setLoad("");
+  }, [index, session.exerciseLogs]);
 
   useEffect(() => {
     if (!running || !resting || done) return;
@@ -79,6 +95,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
           setRunning(false);
           setResting(false);
           setSetNumber((currentSet) => Math.min(totalSets, currentSet + 1));
+          setReps("");
           return restSeconds;
         }
 
@@ -90,22 +107,42 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
   }, [running, resting, done, totalSets, restSeconds]);
 
   const mmss = useMemo(() => formatSeconds(secondsLeft), [secondsLeft]);
+  const loadApplicable = current ? ["strength", "power"].includes(current.category) : false;
 
   function goToExercise(nextIndex: number) {
     setRunning(false);
     setResting(false);
     setSetNumber(1);
+    setReps("");
+    setLoad("");
     setIndex(Math.max(0, nextIndex));
   }
 
-  function completeSet() {
+  function skipRest() {
+    setRunning(false);
+    setResting(false);
+    setSecondsLeft(restSeconds);
+    setSetNumber((currentSet) => Math.min(totalSets, currentSet + 1));
+    setReps("");
+  }
+
+  function logSetAndContinue() {
+    const formData = new FormData();
+    formData.set("exerciseLogId", current.id);
+    formData.set("setIndex", String(setNumber));
+    formData.set("reps", reps);
+    formData.set("load", load);
+    startTransition(() => {
+      void logWorkoutSet(formData);
+    });
+
     if (setNumber >= totalSets) {
       goToExercise(index + 1);
       return;
     }
 
-    setRunning(false);
     setResting(true);
+    setRunning(true);
     setSecondsLeft(restSeconds);
   }
 
@@ -191,8 +228,39 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
               </details>
             </div>
           ) : null}
+          <div className="set-log-panel">
+            <label>
+              Reps completed
+              <input
+                inputMode="numeric"
+                min="0"
+                name="reps"
+                placeholder="Optional"
+                type="number"
+                value={reps}
+                onChange={(event) => setReps(event.target.value)}
+                disabled={resting}
+              />
+            </label>
+            {loadApplicable ? (
+              <label>
+                Weight / load
+                <input
+                  inputMode="decimal"
+                  min="0"
+                  name="load"
+                  placeholder="Optional"
+                  step="0.5"
+                  type="number"
+                  value={load}
+                  onChange={(event) => setLoad(event.target.value)}
+                  disabled={resting}
+                />
+              </label>
+            ) : null}
+          </div>
           <div className="timer-panel">
-            <p className="timer-label">{resting ? "Rest between sets" : "Perform the set, then start rest"}</p>
+            <p className="timer-label">{resting ? "Rest started automatically" : "Log this set to start rest"}</p>
             <div className="timer">{resting ? mmss : formatSeconds(restSeconds)}</div>
           </div>
           <div className="button-row player-controls">
@@ -212,7 +280,7 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
               onClick={() => setRunning((value) => !value)}
             >
               {running ? <Pause size={22} /> : <Play size={22} />}
-              {running ? "Pause" : "Start rest"}
+              {running ? "Pause" : "Resume"}
             </button>
             <button
               type="button"
@@ -245,8 +313,8 @@ export function WorkoutPlayer({ session }: { session: PlayerSession }) {
               <RotateCcw size={18} />
               Reset rest
             </button>
-            <button type="button" className="primary-action" onClick={completeSet}>
-              {setNumber >= totalSets ? "Finish exercise" : resting ? "Skip rest" : "Set complete"}
+            <button type="button" className="primary-action" onClick={resting ? skipRest : logSetAndContinue}>
+              {resting ? "Skip rest" : setNumber >= totalSets ? "Log final set" : "Log set"}
               <StepForward size={18} />
             </button>
           </div>

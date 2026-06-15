@@ -107,6 +107,21 @@ model WorkoutExerciseLog {
   load              Float?
   notes             String?
   orderIndex        Int
+
+  setLogs           WorkoutSetLog[]
+}
+
+
+model WorkoutSetLog {
+  id            String             @id @default(cuid())
+  exerciseLog   WorkoutExerciseLog @relation(fields: [exerciseLogId], references: [id], onDelete: Cascade)
+  exerciseLogId String
+  setIndex      Int
+  reps          Int?
+  load          Float?
+  completedAt   DateTime           @default(now())
+
+  @@unique([exerciseLogId, setIndex])
 }
 
 model StrengthLog {

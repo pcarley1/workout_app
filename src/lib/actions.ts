@@ -83,6 +83,42 @@ export async function createWorkoutSession(formData: FormData) {
   redirect(`/workout/${session.id}`);
 }
 
+
+export async function logWorkoutSet(formData: FormData) {
+  await requireAuth();
+
+  const exerciseLogId = String(formData.get("exerciseLogId") ?? "");
+  const setIndex = Number(formData.get("setIndex"));
+  const repsRaw = String(formData.get("reps") ?? "");
+  const loadRaw = String(formData.get("load") ?? "");
+  const reps = repsRaw ? Number(repsRaw) : null;
+  const load = loadRaw ? Number(loadRaw) : null;
+
+  if (!exerciseLogId || !Number.isInteger(setIndex) || setIndex < 1) return;
+
+  await prisma.workoutSetLog.upsert({
+    where: { exerciseLogId_setIndex: { exerciseLogId, setIndex } },
+    create: {
+      exerciseLogId,
+      setIndex,
+      reps: reps && reps > 0 ? reps : null,
+      load: load && load > 0 ? load : null
+    },
+    update: {
+      reps: reps && reps > 0 ? reps : null,
+      load: load && load > 0 ? load : null,
+      completedAt: new Date()
+    }
+  });
+
+  await prisma.workoutExerciseLog.update({
+    where: { id: exerciseLogId },
+    data: {
+      reps: reps && reps > 0 ? reps : undefined,
+      load: load && load > 0 ? load : undefined
+    }
+  });
+}
 export async function completeWorkoutSession(formData: FormData) {
   await requireAuth();
 

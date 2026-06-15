@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Pause, Play, RotateCcw, StepBack, StepForward } from "lucide-react";
 import { completeWorkoutSession, logWorkoutSet, replaceWorkoutExercise } from "../lib/actions";
 import { SubmitButton } from "./SubmitButton";
@@ -89,6 +90,7 @@ export function WorkoutPlayer({
   exerciseLibrary: ExerciseOption[];
   session: PlayerSession;
 }) {
+  const router = useRouter();
   const [index, setIndex] = useState(0);
   const current = session.exerciseLogs[index];
   const done = index >= session.exerciseLogs.length;
@@ -101,7 +103,7 @@ export function WorkoutPlayer({
   const [reps, setReps] = useState("");
   const [load, setLoad] = useState("");
   const [replacing, setReplacing] = useState(false);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const nextExercise = session.exerciseLogs[index];
@@ -168,8 +170,9 @@ export function WorkoutPlayer({
     const formData = new FormData();
     formData.set("exerciseLogId", current.id);
     formData.set("replacementExerciseId", replacementExerciseId);
-    startTransition(() => {
-      void replaceWorkoutExercise(formData);
+    startTransition(async () => {
+      await replaceWorkoutExercise(formData);
+      router.refresh();
     });
     setReps("");
     setLoad("");
@@ -234,8 +237,8 @@ export function WorkoutPlayer({
           </p>
           <div className="exercise-heading">
             <h1>{current.title}</h1>
-            <button type="button" className="secondary-action compact-action" onClick={() => setReplacing((value) => !value)}>
-              Replace
+            <button type="button" className="secondary-action compact-action" onClick={() => setReplacing((value) => !value)} disabled={isPending}>
+              {isPending ? "Replacing..." : "Replace"}
             </button>
           </div>
           <p className="prescription">{current.prescription}</p>
@@ -244,14 +247,14 @@ export function WorkoutPlayer({
               <p className="timer-label">Best matches</p>
               <div className="replace-grid">
                 {topReplacements.map((option) => (
-                  <button key={option.id} type="button" className="secondary-action" onClick={() => replaceExercise(option.id)}>
+                  <button key={option.id} type="button" className="secondary-action" onClick={() => replaceExercise(option.id)} disabled={isPending}>
                     {option.name}
                   </button>
                 ))}
               </div>
               <label>
                 Browse all
-                <select defaultValue="" onChange={(event) => event.target.value && replaceExercise(event.target.value)}>
+                <select defaultValue="" onChange={(event) => event.target.value && replaceExercise(event.target.value)} disabled={isPending}>
                   <option value="" disabled>Choose replacement</option>
                   {replacementOptions.map((option) => (
                     <option key={option.id} value={option.id}>{option.name}</option>

@@ -1,4 +1,5 @@
 import type { BaselineResultInput, BaselineTestSeed, ExerciseSeed } from "./types";
+import { expandedExerciseSeeds } from "./expandedExerciseSeeds";
 
 export const baselineTests: BaselineTestSeed[] = [
   { slug: "hip-ir-left", name: "Hip Internal Rotation - Left", category: "mobility", side: "left", unit: "degrees", priority: 1 },
@@ -262,7 +263,8 @@ export const exercises: ExerciseSeed[] = [
     regression: "Move farther from the wall and use a smaller range.",
     progression: "Add a light dumbbell on the knee if available.",
     tags: ["ankle-dorsiflexion", "posture", "mobility", "daily"]
-  })
+  }),
+  ...expandedExerciseSeeds
 ];
 
 export function getBaselineCoverage(results: BaselineResultInput[]) {
